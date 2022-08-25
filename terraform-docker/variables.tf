@@ -1,10 +1,31 @@
+# variable "env" {
+#     type = string
+#     description = "Env to deploy to"
+#     default = "dev"
+# }
+
+variable "image" {
+    type = map
+    description = "image for container"
+    default = {
+        dev = "nodered/node-red:latest"
+        prod = "nodered/node-red:latest-minimal"
+    }
+}
+
 variable "ext_port" {
-    type = list
-    sensitive = true
+    type = map
+    # sensitive = true
     
     validation {
     # ... is termed as spread operator applied on list
-        condition = max(var.ext_port...) <= 65535 && min(var.ext_port...) > 0
+        condition = max(var.ext_port["dev"]...) <= 65535 && min(var.ext_port["dev"]...) >= 1980
+        error_message = "The external port must be in valid port range 0 - 65535."
+    }
+    
+    validation {
+    # ... is termed as spread operator applied on list
+        condition = max(var.ext_port["prod"]...) <= 1980 && min(var.ext_port["prod"]...) >= 1880
         error_message = "The external port must be in valid port range 0 - 65535."
     }
 }
@@ -28,5 +49,6 @@ variable "int_port" {
 
 # locals allow using function but variable doesn't allows
 locals {
-    container_count = length(var.ext_port) 
+  #  container_count = length(lookup(var.ext_port, terraform.workspace))
+    container_count = length(var.ext_port[terraform.workspace])
 }

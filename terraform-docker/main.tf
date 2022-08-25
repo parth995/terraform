@@ -17,7 +17,7 @@ resource "null_resource" "dockervol" {
 }
 
 resource "docker_image" "nodered_image" {
-    name = "nodered/node-red:latest"
+    name = var.image[terraform.workspace]
 }
 
 #whenever new provider or resource is added, perform terr
@@ -32,15 +32,15 @@ resource "random_string" "random" {
 
 resource "docker_container" "nodered_container" {
     count = local.container_count
-    name = join("-", ["nodered", random_string.random[count.index].result])
+    name = join("-", ["nodered", terraform.workspace, random_string.random[count.index].result])
     image = docker_image.nodered_image.latest
     ports {
         internal = var.int_port # it's a number not integer
-        external = var.ext_port[count.index]
+     #   external = lookup(var.ext_port, terraform.workspace)[count.index]
+        external = var.ext_port[terraform.workspace][count.index]
     }
     volumes {
         container_path = "/data"
-        host_path = "/home/ubuntu/environment/terraform-docker/noderedvol"
+        host_path = "${path.cwd}/noderedvol"
     }
 }
-
